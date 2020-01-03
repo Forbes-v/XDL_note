@@ -1,0 +1,848 @@
+﻿1.系统的安装:
+	参考文档
+1.登陆系统:
+	login as :root
+		输入密码:没有* 直接输入即可(因为为了提高系统安全)
+	
+	1.我们为什么需要使用第三方工具连接我们的linux,因为在linux的系统中
+	不能复制和粘贴,因为在linux系统中,我们只用键盘
+	2.我们也可以使用类似putty的第三方工具进行连接到我们的linux
+	3.我们在连接的时候,会发现我们linux中的网卡并没有打开
+	4.我们需要打开eth0网卡
+		详细的步骤:
+		 1).开启网卡: 
+			我们需要找到一个文件,这个文件在:			
+			[root@localhost /]# cd /etc/sysconfig/network-scripts/
+			
+			[root@localhost network-scripts]# ls
+			ifcfg-eth0   ifdown-isdn    ifup-aliases  ifup-plusb     init.ipv6-global
+			ifcfg-lo     ifdown-post    ifup-bnep     ifup-post      net.hotplug
+			ifdown       ifdown-ppp     ifup-eth      ifup-ppp       network-functions
+			ifdown-bnep  ifdown-routes  ifup-ippp     ifup-routes    network-functions-ipv6
+			ifdown-eth   ifdown-sit     ifup-ipv6     ifup-sit
+			ifdown-ippp  ifdown-tunnel  ifup-isdn     ifup-tunnel
+			ifdown-ipv6  ifup           ifup-plip     ifup-wireless
+
+			ls后我们能看到 ifcfg-eth0然后我们使用vi编辑器进行编辑当前的文件
+			
+			
+			[root@localhost network-scripts]# vi ifcfg-eth0
+			打开后看到 ONBOOT="no"  把no改成 yes
+			我们使用键盘的方向键将光标移动到要改的位置,按i键进入到编辑模式
+			改完后我们按esc,退出编辑模式
+			然后我们需要保存退出:按shift+:进入到末行模式,在末行可以看到:输入wq保存退出
+			
+			小妙招:在打命令时候,我们可以使用tab键进行补全命令
+			
+			
+		 2).关闭linux中的selinux服务
+			如果路径在:[root@localhost network-scripts]#
+				输入命令 cd ../
+				
+				[root@localhost network-scripts]# cd ../
+				使用ls命令查看当前目录中的文件及目录
+				[root@localhost sysconfig]# ls
+				atd         i18n              network          rsyslog
+				auditd      init              networking       samba
+				authconfig  ip6tables-config  network-scripts  sandbox
+				autofs      ip6tables.old     nfs              saslauthd
+				cbq         iptables-config   ntpd             selinux
+				cgconfig    iptables.old      ntpdate          smartmontools
+				cgred.conf  irqbalance        prelink          sshd
+				clock       kdump             quota_nld        sysstat
+				console     kernel            raid-check       sysstat.ioconf
+				cpuspeed    keyboard          readahead        system-config-firewall
+				crond       modules           readonly-root    system-config-firewall.old
+				grub        netconsole        rngd             udev
+
+
+				编辑这个文件 selinux
+				使用vi编辑器
+				能看到:SELINUX改成SELINUX=disabled
+				按i进入编辑模式,然后按esc退出编辑模式,shift加:
+				输入wq回车退出编辑器
+				
+			 3)关闭防火墙
+				输入setup命令 回车
+				找到防火墙配置回车
+				能看到防火墙[*]启用,如果有*表示的是开启状态
+				我们需要把*干掉(将光标移动到*的位置,按空格)
+				
+			 4)重新启动网卡 
+				[root@localhost sysconfig]# service network restart
+				正在关闭接口 eth0：                                        [确定]
+				关闭环回接口：                                             [确定]
+				弹出环回接口：                                             [确定]
+				弹出界面 eth0：
+				正在决定 eth0 的 IP 信息...完成。
+			 5)使用ifconfig命令查看网卡信息
+			 
+			 在putty的软件中输入你看到的ip地址,然后登陆即可
+				输入你的账号和密码回车
+				
+	分区:
+		/(根分区) 在linux中没有盘符的概念,所有的系统文件都早/里
+		swap(交换分区)	2048MB
+			swap分区在系统物理内存(运行内存)不够用的时候,会把swap分区中的内存拿出来用一用
+		/boot(启动分区)  200M左右够了
+		
+	登录成功后	
+		[root@localhost ~]#
+		[用户名@主机名 当前所在位置]#  ~表示的是家目录
+		在中括号后如果是#表示的是超级管理员
+		如果中括号后边是$表示的是普通用户
+		
+	linux系统中的命令
+		系统命令的语法格式:
+			命令 [-选项参数] 操作对象
+		例如:打  斧子  刘海峰
+		1.命令名称:ls
+			执行权限:所有用户
+			功能描述:显示指定目录中的文件或目录
+			参数:
+				-l 显示文件或目录的详细信息(一共7列)
+				-a 显示目录中的所有文件,包含隐藏文件(在linux系统中的隐藏文件是在文件的前边加.)
+				-la显示目录中的所有文件及详细信息
+				-lh人性化显示文件大小
+				ls -l 显示详细信息 等同于 ll命令
+				[root@localhost ~]# ls -lh install.log
+				-rw-r--r--. 1 root root 25K 12月 24 21:46 install.log
+		
+		ls -l 中每一列的介绍
+			第一列:
+				第一位:文件或目录类型
+					- 表示的是普通文件(图片,视频,可执行文件) *
+					d 表示的目录文件*
+					l 表示的是软件接文件*
+					c 字符设备文件
+					b 块设备文件
+					s 套接文件
+					p 管道文件
+				第2位-第4位:文件所有者权限  r可读  w可写  x 可执行
+				第5位-第7位:文件所有组权限  r可读  w可写  x 可执行
+				第8位-第10位:其他人
+			第二列:硬链接数
+			第三列:文件所有者
+			第四列:文件所有组
+			第五列:文件大小
+			第六列:文件的修改时间或访问时间
+			第七列:文件名
+			
+		命令名称:cd
+			执行权限:所有用户
+			功能描述:切换目录
+			语法格式: 
+				cd  ./  cd ../  cd ../../
+				cd /aa/   cd /bb
+			高级用法:
+				1.cd -  返回上一次的工作目录
+				2.cd ~  回家 等价于 cd
+				3.cd /  切换到根目录
+					添加一个用户
+						useradd 用户名
+					cd ~xaiofengfeng 去指定用户的家目录
+					su 用户名  切换用户
+				删除用户 userdel -r 删除用户及用户家目录
+				
+		命令名称:pwd
+			执行权限:所有用户
+			功能描述:显示当前所在目录
+		命令名称:clear
+			执行权限:所有用户
+			功能描述:清屏
+		命令名称:history
+			功能描述:显示历史命令
+			
+		命令名称:mkdir
+			
+			执行权限:所有用户
+			语法格式:mkdir [-p 递归创建] 目录名
+			功能描述:创建目录
+			使用技巧:
+			1.同时创建多个目录
+				mkdir aaa bbb ccc
+			2.递归创建:
+				mkdir -p a/b/c/d
+		命令名称:touch
+			执行权限:所有用户
+			语法格式:touch 文件名
+			功能描述:创建一个空文件
+			注意:在linux系统中没有扩展名概念,扩展名是给我们用户看的
+			创建多个文件:touch a.php 3.php
+		
+			
+		命令名称:cp
+			执行权限:所有用户
+			语法格式:cp [-r] 源文件或目录 目标目录
+				-r参数 如果加该参数表示的是可以复制目录
+			功能描述:复制文件或目录
+				[root@localhost ~]# cp -r bbb.php ddd/
+		命名名称:mv
+			执行权限:所有用户
+			语法格式:mv 源文件或目录  目标目录
+			功能描述:移动文件(剪切文件)
+				如果目标位置不是目录是文件,那么就是重命名
+				
+				
+		练习:
+			1.在家目录中创建 AAA目录和BBB目录
+			2.在AAA目录中创建bbb文件
+			3.在BBB目录中创建aaa文件
+			4.将aaa文件移动到AAA目录下
+			5.将bbb文件移动到BBB目录下
+			6.将AAA目录复制到/tmp中
+			7.将BBB目录复制到/tmp/AAA目录中
+			
+		命令名称:rm
+			执行权限:所有用户
+			语法格式:rm  [-rf] 目录或文件
+				-r 删除目录
+				-f 强制删除
+			删除文件或目录  rm -rf aaa.php
+			连续删除文件或目录  [root@localhost ~]# rm -rf bbb.php ccc.php ddd.php
+			删除当前目录中的所有文件或目录 [root@localhost bbb]# rm -rf *
+			删除指定字母开头的文件[root@localhost bbb]# rm -rf aa*
+			
+			
+			rmdir 只能删除空目录
+			
+		命令名称:cat
+			执行权限:所有用户
+			语法格式:cat 文件名
+			功能描述:显示文件内容
+			
+		命令名称:more
+			执行权限:所有用户
+			语法格式:more 文件名
+				关于翻页:
+					f(空格)向下翻页
+					b      向上翻页
+					回车   一次向下移动一行
+			功能描述:分页显示文件内容
+		
+		命令名称:head
+			执行权限:所有用户
+			语法格式:head -n 文件名
+				-n 从头开始显示几行
+				如果没有参数,表示的是默认显示10行
+		命令名称:tail
+			执行权限:所有用户
+			语法格式:tail -n(行数) 文件名
+			功能描述:显示文件尾多好行
+		命名名称:ln
+			执行权限:所有用户
+			语法格式:ln -s 源文件 目标文件
+			功能描述:创建软硬连接
+				如果加了 -s参数表示的是 创建软连接
+					软连接就是类似于我们window系统中的快捷方式
+						如果连接文件被删除,原文件不会受到影响
+						如果源文件被删除,连接文件不能使用
+				如果不加 -s参数表示的是 创建硬链接
+					如果删除源文件,硬链接不会受到影响
+					硬链接是如果其中一个文件的内容发生改变,所有文件的内容都会一同改变
+					
+		权限管理的命令:
+			权限符号:                  对文件的意义       对目录的意义
+				r(read) 可读           查看文件内容      可列出里边的内容
+				w(write)可写           修改文件内容      在目录中创建或删除内容
+				x(execute)可执行       是否可执行        是否可进入目录
+				
+				
+				- --- --- ---
+				
+			命令名称:
+				执行权限:root
+				语法格式:chmod {u|g|o|a} {+|-|={r|w|x}} 文件或目录
+
+				u:user 文件所有者权限设置
+				g:group文件所有组权限设置
+				o:other其他人权限设置
+				a:all  所有权限设置
+				[root@localhost bbb]# chmod u+r aaa.php
+				[root@localhost bbb]# chmod u-r aaa.php
+				[root@localhost bbb]# chmod u=rwx aaa.php
+					使用=进行更改权限的时候,覆盖文件或目录的权限
+			
+			
+				
+				使用数字的方式设置权限
+			  	 r    w     x       r    w     x     r    w     x
+				 4    2     1=7     4    2     1=7   4    2     1=7
+				 
+				 
+				 
+				 550
+				 r-x r-x ---   3 3 1   -wx  -wx --x
+				 
+			添加用户
+				useradd 添加一个用户
+					语法格式:useradd 用户名
+					给新用户设置密码  passwd 用户名
+				切换用户  su 用户名
+				
+				
+		--------------linux03-------------
+		
+		命令名称:chown
+			语法格式:chown 用户.组名 文件或目录
+			功能描述:更改文件的所有者权限
+			[root@localhost ~]# chown xiaojingang bbb.php
+			如果想更改w文件所有者和文件所有组权限
+			[root@localhost ~]# chown xiaojingang.xiaojingang ccc.php
+			同时更改文件的所有者和文件的所有组
+			[root@localhost ~]# chown .dajingang ccc.php
+			只更改文件所有组
+			
+		命令名称:chgrp
+			语法格式:chgrp 用户组 文件或目录
+			功能描述:只更改文件或目录的文件所有组
+			[root@localhost ~]# chgrp xiaojingang ddd.php
+			
+		命令名称:man
+			功能描述:帮助命令
+			语法格式:man 命令
+			类似于我们在php中的手册
+			
+		命令名称:find
+			功能描述:文件搜索
+			语法格式:find 搜索范围 匹配条件
+			 -name  表示的是按照文件名去查找
+				                    命令    检索的路径     搜索条件    搜索的文件名
+				[root@localhost ~]# find    /tmp            -name        yum.log
+
+				
+			通配符:
+				*  匹配任意字符任意次数
+					[root@localhost ~]# find ~ -name 'b*.php'
+					注意:搜索的文件必须加单引号或双引号
+				?  匹配字符一次
+					[root@localhost ~]# find ~ -name 'bb5?7.php'
+					
+			按照文件的用户所有者去查文件
+				find 路径 -user 用户
+				[root@localhost ~]# find ~ -user xiaojingang
+			按照文件的所有组查文件
+				find 路径 -group 组名
+				[root@localhost ~]# find ~ -group dajingang
+
+			按照文件大小查找
+				find 路径 -size +40k
+					+40k 大于40k
+					-40k 小于40k
+					60k
+				[root@localhost ~]# find ~ -size +80k
+			通过权限查找
+				find -perm 000				
+				[root@localhost ~]# find ~ -perm 777
+			按照类型查找
+				find 路径 -type 类型
+					l类型表示的是软连接文件
+					d类型表示的是目录文件
+					f类型表示的是普通文件
+					[root@localhost ~]# find ~ -type 类型
+					
+			按照文件名查找,不区分大小写
+				find 路径 -iname 文件名
+				[root@localhost ~]# find ~ -iname BBB.php
+				
+			 -a(and)  -o(or)
+				find ~ -name 'a*' -a size -2k
+				find ~ -name 'a*' -a size +2k
+				find ~ -name 'a*' -o size +2k
+				
+				
+		命名名称:grep(过滤内容)
+			语法格式: grep -iv 要匹配的字符 文件
+				-i 不区分大小写
+				-v 反向过滤(取反)
+				
+			功能描述:在文件中匹配字符串,并输出
+			[root@localhost ~]# grep -iv LOVE qingzhen.zz
+			
+		压缩/解压命令
+			在window中  .zip  .rar  .7z
+			在linux 中  .gz  .tar  .tar.gz  .bz2......
+		1.命令名称:gzip
+			功能描述:压缩文件
+			压缩后的文件个是.gz
+			语法格式:gzip 文件名
+			压缩后不会保留源文件
+			
+		2.命令名称:gunzip
+			功能描述:解压文件
+			语法格式:gunzip 压缩文件
+			解压后不保留压缩文件
+			
+		3.命名名称:tar 
+			功能描述:打包
+			语法格式:tar 参数 压缩后的文件 目录或文件
+				-c 打包
+				-x 解包
+				-v 显示相信信息
+				-f 指定文件名
+				-z 打包同时压缩 .gz
+				-j 打包同时压缩 .gz2
+			例如:
+			 打包 [root@localhost ys]# tar -cf aaa.php.tar aaa.php
+			 解包 [root@localhost ys]# tar -xf aaa.php.tar
+			 
+			批量打包:
+				[root@localhost images]# touch 1.jpg 2.jpg 3.jpg
+				[root@localhost images]# ls
+				1.jpg  2.jpg  3.jpg
+				[root@localhost images]# touch 4.mp4
+				[root@localhost images]# ls
+				1.jpg  2.jpg  3.jpg  4.mp4
+				[root@localhost images]# tar -cf img.tar *.jpg
+				[root@localhost images]# ls
+				1.jpg  2.jpg  3.jpg  4.mp4  img.tar
+				[root@localhost images]# rm -rf *.jpg
+				[root@localhost images]# ls
+				4.mp4  img.tar
+				[root@localhost images]# tar -xf img.tar
+				[root@localhost images]# ls
+				1.jpg  2.jpg  3.jpg  4.mp4  img.tar
+				
+		4.命令名称:bzip2
+			功能描述:压缩文件
+			语法格式:bzip2 -k 文件
+				-k 产生压缩文件后保留源文件
+				
+		5.命令名称:bunzip2
+			功能描述:压缩文件
+			语法格式:bzip2 -k 压缩后的文件
+			
+		命名名称:ping
+			参数:-c  指定发送次数	
+		[root@localhost images]# ping -c3 192.168.17.123
+		PING 192.168.17.123 (192.168.17.123) 56(84) bytes of data.
+		64 bytes from 192.168.17.123: icmp_seq=1 ttl=128 time=0.357 ms
+		64 bytes from 192.168.17.123: icmp_seq=2 ttl=128 time=0.331 ms
+		64 bytes from 192.168.17.123: icmp_seq=3 ttl=128 time=1.91 ms
+		
+		查看当前网卡的ip地址:
+			ifconfig
+			
+		临设设置ip
+			ifconfig eth0 192.168.17.234
+		通过linux命令来设置ip
+			setup
+		关机命令:shutdown!!!!!!!!
+		执行权限:root
+		
+		重启命令:reboot
+		
+		
+		软件包管理
+			源码包:
+				优点:开源,自由定制,效率更高
+				缺点:编译时间长,一旦报错,很难解决
+			二进制包(编译后的包):rpm包
+				优点:安装速度快,简单
+				缺点:自定义差,依赖性
+				
+			光驱的挂载
+				1.设置挂载点  在/mnt/ 下 创建一个目录 cdrom目录
+				2.挂载光驱:命令 mount
+					光驱位置:/dev/sr0
+					挂载:mount /dev/sr0 /mnt/cdrom 
+					[root@localhost /]# mount /dev/sr0 /mnt/cdrom/
+					mount: block device /dev/sr0 is write-protected, mounting read-only
+				[root@localhost Packages]# ls |grep http
+				httpd-2.2.15-15.el6.centos.1.i686.rpm
+				
+			rpm包安装:
+				rpm -ivh 软件包
+					-i 安装
+					-v 显示详细信息
+					-h 显示进度
+					-U 升级
+					-q 显示程序是否安装
+					-qi显示安装后包名的详细信息
+					-e 卸载软件
+					
+					
+				依赖安装
+					[root@localhost Packages]# rpm -ivh apr-1.3.9-3.el6_1.2.i686.rpm
+
+				查看是否安装:
+					rpm -q httpd
+				如果能看到如下,表示的是安装成功
+				[root@localhost Packages]# rpm -q httpd
+				httpd-2.2.15-15.el6.centos.1.i686
+				
+			yum安装:
+				yum命令:
+					语法格式: 
+						yum -y install  -y(自动回答yes)  安装
+						yum -y remove  	卸载软件包
+						yum -y update   升级软件包(在有网络的情况下)
+						yum list 查询软件包
+				yum源配置(为了让yum安装方式生效):
+					1.找到:[root@localhost yum.repos.d]# cd /etc/yum.repos.d/
+						ls
+						[root@localhost yum.repos.d]# ls
+				CentOS-Base.repo  CentOS-Debuginfo.repo  CentOS-Media.repo  CentOS-Vault.repo
+
+					2.挂载光盘:
+						mount /dev/sr0 /mnt/cdrom
+						
+					3.备份配置文件  CentOS-Media.repo
+						[root@localhost yum.repos.d]# cp CentOS-Media.repo CentOS-Media.repo.cp
+
+					4.修改配置文件:CentOS-Media.repo	
+					baseurl=file:///media/CentOS/  指定yum位置
+							file:///media/cdrom/
+							file:///media/cdrecorder/
+					gpgcheck=1
+					enabled=0
+					
+					改成
+					baseurl=file:///mnt/cdrom/  指定yum位置
+					gpgcheck=0   rpm验证不生效
+					enabled=1    yum源文件生效
+					
+					保存退出
+					
+					yum安装一个gcc(gcc是c语言编译器)
+					
+					安装gcc-c++
+					yum -y install gcc-c++
+					
+			vi编辑器:
+				在linux中负责代码的编写
+				
+				概念:vi编辑器功能强大,它是linux/UNIX上常用的编辑工具
+					功能描述:新建文件,编辑文件,显示文件内容
+					
+				vi编辑器中的3种模式:
+					1.命令模式:在命令模式下可以对光标所在行或设置所在字符进行快速定位或复制,粘贴等操作
+					2.编辑模式:在编辑模式下可以对文本进行编辑
+						注意事项:在编辑模式写,按esc退出编辑模式,进入命令模式
+					3.末行模式:在末行模式下我们可以保存,退出等操作
+						末行模式的触发:shift+:
+						
+						
+					定位命令:
+						:set nu 设置行号   **
+						:set nonu 取消行号  **
+						gg   定位到第一行   **
+						G    定位到最后一行  **
+						nG   定位到n行   
+						:n   定位到n行  **
+						$    定位到行尾  **
+						^    定位到行首  **
+						h    光标向左移动
+						l    光标向右移动
+						j    光标向下移动
+						k    光标向上移动
+					插入命令:
+						i    在光标所在字符前插入字符**
+						a    在光标所在字符后插入字符**
+						A    当前光标所在行行尾插入新字符**
+						I    当前光标所在行行首插入新字符**
+						o    在当前光标的下一行插入新行 **
+						o    在当前光标的上一行插入新行  **
+						s    替换当前光标所在字符 
+						S    替换当前光标所在行
+						
+					删除命令
+						x    删除当前光标所在字符
+						nx   删除当前光标所在处后n个字符(包含自己)
+						dd   删除当前光标所在行   **
+						dG   删除光标到文件末尾
+						D    删除光标所在处到行尾
+						:n1,n2d  删除指定范围行  **
+							语法格式:   :10,30d  从第10行删除到第30行
+							
+					复制剪切命令:	
+						yy  复制当前行    **
+						nyy 复制光标所在行下几行  **
+						p   粘贴到当前光标所在行下  **
+						P   粘贴到当前光标所在行上  **
+						dd  剪切当前行    **
+						ndd 剪切多少行    **
+						v   可视复制剪切
+						
+					替换取消命令:
+						r  替换当前光标所在字符
+						R  从当前光标所在处开始替换
+						u  取消上一次操作   **
+						
+					搜索命令:
+						/  字符  所搜指定字符  **
+					
+					
+						全文替换指定字符  **
+						:%s/old/new/g
+						
+						在指定行范围内替换指定字符  **
+						:n1,n2s/old/new/g
+						
+						
+					保存退出:* 
+						:w  保存但是不退出
+						:w 文件名  另存为新的指定文件
+						:wq 保存并退出
+						:wq!强制保存退出   root
+						:q! 强制退出,不保存
+						ZZ  保存退出  wq 保存并退出
+						
+					vim编辑器:会有颜色
+					
+			用户管理:
+				hostname  查看当前用户名
+				hostname  用户名  临时修改用户名(当系统重新启动的时候会消失)
+				
+				1.用户管理的相关配置文件
+					目录:[root@localhost ~]# vi /etc/passwd  查看用户配置文件信息
+						
+					打开文件后:
+						1.用户名   *
+						2.密码状态 *
+						3.用户的uid 1-499 系统用户(不可登录的用户)如果是0表示的是超级用户,500-500+表示的是普通用户*
+						4.用户组 *
+						5.用户的说明信息
+						6.用户的家目录
+						7.用户使用命令的指定解析器
+				2.影子文件(存储密码的文件)
+					vi/etc/shadow
+						1.用户名  *
+						2.用户密码的加密信息  *
+							在linux中的加密算法是:SHA512
+							在修改密码的时候不能在该处更改
+							如果在密码位置是!! 表示的是没有密码(添加的是新用户,这个位置就是!!)
+							如果在加密的密码前加!!表示的是当前用户不可用
+						3.密码最后一次修改日期
+							为什么root用户的密码修改时间是18254
+								因为linux计算日期的方式是以1970年1月1号作为1,不断的累加
+						4.最小的修改时间间隔
+							如果该位置是0,表示的是随时可修改
+						5.密码的有效期
+							如果是99999的意思是99999天后过期
+						6.密码修改到期的警告时间(默认为7)
+						7.密码过期后的宽限时间
+							如果是0.则表示密码过期后立马失效
+							如果是10,到期后10天内可以使用
+						8.账号失效时间:
+							如果在账号失效后,即使密码正确,该用户也无法登录
+							
+						9.保留!
+						
+						
+				3.文件用户组配置文件
+					 1.组名
+					 2.组密码  x表示的是密码
+					 3.组id
+					 4.组中的用户
+				4.添加组:
+					groupadd 组名
+						[root@user ~]# vi /etc/group
+				5.添加用户:
+					useradd 用户名
+						参数:
+							-g  组名
+							-c  添加说明
+							-d  手动指定家目录
+					[root@user ~]# useradd -d /home/zhangsanfeng user10
+					[root@user home]# useradd -c php46stu liyue
+					[root@user home]# useradd -g php47 xuhao
+					
+				6.设置密码
+					passwd  用户名
+						-S 查询当前用户密码状态(仅root用户可用)
+						[root@user home]# passwd -S xiaoyu
+						xiaoyu PS 2019-12-25 0 99999 7 -1 (密码已设置，使用 SHA512 加密。)
+
+						-l 临时锁定用户 (仅root用户可用)
+						[root@user home]# passwd -l xiaoyu
+						锁定用户 xiaoyu 的密码 。
+						passwd: 操作成功
+						
+						-u 解除锁定用户 (仅root用户可用)
+						[root@user home]# passwd -u xiaoyu
+						解锁用户 xiaoyu 的密码 。
+						passwd: 操作成功
+						
+				7.删除用户:
+					userdel 
+						-r  连同家目录一同删除
+						
+				8.修改用户组:
+					groupmod 组名
+						-g  gid
+						-n  新组名
+						
+							新组名在前  原组名在后
+				9.删除组:
+					groupdel 组名
+					
+						注意:在删除组的时候,我们需要先删除组中的用户
+						
+				10.将存在的用户加入组:
+					gpasswd -a 用户名  组名
+						-a 添加用户组
+						-d 从组中删除用户
+						
+				11.su  切换用户
+				
+				12.修改用户信息
+					usermod  用户名
+						参数:
+							1. -u  UID
+							2. -c  用户说明
+							3. -G  修改组
+							4. -L  临时锁定用户		
+							5. -U  解锁用户						
+					
+					
+				reboot
+					
+				如果密码忘记了:我们需要进入到单用户模式:
+					1.让我们的系统重新启动,连续按e键
+					按完e 会出现一个选择框
+						选择第二个(将光标移动到第二个选项位置按e进入)
+						能看一些配置文件  quiet  在这个字符后加 single
+						按回车
+						
+						会回到之前的选项位置,按b进入单用户模式
+						
+						
+						修改密码后,重启,什么都别按,就可以正常使用账号和刚修改的密码登录系统
+										
+					
+					添加用户组,创建用户,把用户添加到指定的组中,然年修改文件或目录的权限,那文件所有
+					组,权限设置为可读可写权限,其他人,无权限,然后切换用户,来操作文件
+
+				
+
+	设置别名:
+		[root@user ~]# /usr/local/apache2/bin/apachectl stop
+		[root@user ~]# /usr/local/apache2/bin/apachectl start
+	编辑配置文件:
+		/root/.bashrc
+		修改配置文件:
+			在配置文件中添加如下代码
+			 alias	sto='/usr/local/apache2/bin/apachectl stop'
+			 alias	sta='/usr/local/apache2/bin/apachectl start'
+	 
+	    保存退出
+		让配置文件生效
+			source /root/.bashrc
+			
+		修改端口
+			[root@user ~]# vi /usr/local/apache2/etc/httpd.conf
+			在配置文件中找到 Listen 80
+			
+		http://192.168.17.124:8090/test.php
+		
+		修改网站的根目录:
+			安装lamp后的默认的项目访问目录是:
+				[root@user ~]# cd /usr/local/apache2/htdocs/
+
+		编辑配置文件:
+			找到
+			   216 DocumentRoot "/usr/local/apache2//htdocs"
+			   217 <Directory "/usr/local/apache2//htdocs">
+			   
+			   将上边的路径部分改成 www
+			   
+			   216 DocumentRoot "/www/"
+			   217 <Directory "/www/">
+			   
+			   保存退出
+			   注意:必须创建www目录
+			   重新启动服务
+
+							
+						
+						
+Navicat远程连接MySQL命令权限破解
+grant all privileges on *.* to 'root'@'%' identified by '123' with grant option;
+
+
+MySQL配置环境变量:
+[root@user ~]# vi /etc/profile  加入以下两条代码
+PATH=$PATH:/usr/local/php/bin:/usr/local/mysql/bin/
+export PATH
+保存退出
+[root@user ~]# source /etc/profile
+[root@user ~]# echo $PATH
+
+
+返回/usr/lib/qt-3.3/bin:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin:/usr/local/php/bin:/usr/local/mysql/bin/
+则表明配置成功				
+						
+						
+						
+						
+						
+						
+				
+					
+					
+					
+					
+
+						
+
+		
+		
+		
+			
+
+
+
+			
+				
+			
+
+
+				
+
+
+			
+
+			
+				
+			
+
+				
+			
+
+
+
+	
+
+			
+
+				 
+				 
+				 
+				 
+			
+			
+				
+				
+			
+				
+			
+				
+			
+			
+				
+		
+		
+			
+			
+			
+
+
+				
+
+			
+	
+	
+	
+		
+	
